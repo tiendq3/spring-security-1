@@ -25,7 +25,6 @@ import java.util.Map;
 @EnableWebSecurity
 @Slf4j
 public class WebSecurityConfig3 extends WebSecurityConfigurerAdapter {
-
     @Bean
     public UserDetailsService inMemoryUserDetailsManager() {
         Collection<UserDetails> users = new ArrayList<>();
@@ -44,11 +43,18 @@ public class WebSecurityConfig3 extends WebSecurityConfigurerAdapter {
         return new InMemoryUserDetailsManager(users);
     }
 
+    // Tạo 1 Bean PasswordEncoder lấy trong HashMap encoders;
+
     @Bean
     public PasswordEncoder encoder() {
         return delegatingPasswordEncoder("bcrypt");
     }
 
+    /** method trả về DelegatingPasswordEncoder là con của PasswordEncoder nhưng mục đích
+     * để quản lý các PasswordEncoder khác bằng HashMap
+     * @param encodingType
+     * @return
+     */
     public static PasswordEncoder delegatingPasswordEncoder(String encodingType) {
         Map<String, PasswordEncoder> encoders = new HashMap<>();
         encoders.put("bcrypt", new BCryptPasswordEncoder());
@@ -59,16 +65,27 @@ public class WebSecurityConfig3 extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.httpBasic();
-//        http.formLogin();
         http
-//                .exceptionHandling()
-//                .accessDeniedPage("/un-authorizes")
-//                .and()
+                // bắt exception khi xác thực hoặc phân quyền xảy ra lỗi
+                .exceptionHandling()
+                // điều hướng đến api /un-authorizes
+                .accessDeniedPage("/un-authorizes")
+                .and()
+                // xử lý phân quyền các api
                 .authorizeRequests()
-                .antMatchers("api/products").hasRole("Admin")
-                .antMatchers("api/hello").hasRole("Admin")
-                .antMatchers("api/coffee").hasRole("Admin")
-                .antMatchers("/**").authenticated();
+                // phải viết đúng url của api (hoăc là có thể dùng ** nhưng phải kèm theo /)
+                // patten api và hasAnyRole ít nhất 1 trong 2 role đã định
+                .antMatchers("/**/products").hasAnyRole("Admin", "User")
+                .antMatchers("/**/hello").hasAnyRole("Admin", "Operator")
+                .antMatchers("/**/coffee").hasAnyRole("Admin", "Operator")
+                // các request còn lại cần phải xác thực
+                .anyRequest().authenticated()
+                .and()
+                // dùng form login để đăng nhập
+                .formLogin()
+                // khi login để chuyển trên api /login
+                .loginProcessingUrl("/login")
+                // tất cả người dùng đều có thể truy cập api này
+                .permitAll();
     }
 }
