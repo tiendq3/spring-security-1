@@ -73,11 +73,9 @@ public class WebSecurityConfig3 extends WebSecurityConfigurerAdapter {
                 .and()
                 // xử lý phân quyền các api
                 .authorizeRequests()
-                // phải viết đúng url của api (hoăc là có thể dùng ** nhưng phải kèm theo /)
-                // patten api và hasAnyRole ít nhất 1 trong 2 role đã định
-                .antMatchers("/**/products").hasAnyRole("Admin", "User")
-                .antMatchers("/**/hello").hasAnyRole("Admin", "Operator")
-                .antMatchers("/**/coffee").hasAnyRole("Admin", "Operator")
+                .antMatchers("/products").hasAnyRole("Admin", "User")
+                .antMatchers("**/hello").hasAnyRole("Admin", "Operator")
+                .antMatchers("api/coffee").hasAnyRole("Admin", "Operator")
                 // các request còn lại cần phải xác thực
                 .anyRequest().authenticated()
                 .and()
