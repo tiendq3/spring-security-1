@@ -1,6 +1,7 @@
 package com.example.demo_security.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,9 +10,12 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Product {
+@Builder
+public class Book {
 
-    private String name;
+    private Long id;
 
-    private Double price;
+    private String title;
+
+    private String description;
 }

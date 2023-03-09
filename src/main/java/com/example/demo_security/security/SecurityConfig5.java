@@ -1,14 +1,15 @@
 package com.example.demo_security.security;
 
+import com.example.demo_security.model.Authority;
+import com.example.demo_security.model.User;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,24 +19,43 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableWebSecurity
 @Slf4j
-public class WebSecurityConfig4 extends WebSecurityConfigurerAdapter {
+public class SecurityConfig5 extends WebSecurityConfigurerAdapter {
 
     @Bean
     public UserDetailsService inMemoryUserDetailsManager() {
         Collection<UserDetails> users = new ArrayList<>();
 
-        User.UserBuilder userBuilder = User.builder().passwordEncoder(encoder()::encode);
-        var tien1 = userBuilder.username("tien1").password("123").roles("Admin").build();
-        var tien2 = userBuilder.username("tien2").password("123").roles("Operator").build();
-        var tien3 = userBuilder.username("tien3").password("123").roles("User").build();
+        Set<GrantedAuthority> authorTien1 = Stream.of(
+                Authority.CREATE,
+                Authority.EDIT,
+                Authority.DELETE,
+                Authority.READ,
+                Authority.SEARCH).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
+
+        var tien1 = User.builder()
+                .username("tien1")
+                .password(encoder().encode("123"))
+                .authorities(authorTien1)
+                .build();
+        var tien2 = User
+                .builder()
+                .username("tien2")
+                .password(encoder().encode("123"))
+                .authorities(Set.of(new SimpleGrantedAuthority(Authority.READ)))
+                .build();
+        var tien3 = User
+                .builder()
+                .username("tien3")
+                .password(encoder().encode("123"))
+                .authorities(Set.of(new SimpleGrantedAuthority(Authority.SEARCH)))
+                .build();
 
         users.add(tien1);
         users.add(tien2);
@@ -63,9 +83,10 @@ public class WebSecurityConfig4 extends WebSecurityConfigurerAdapter {
                 .accessDeniedPage("/un-authorizes")
                 .and()
                 .authorizeRequests()
-                .antMatchers("/**/products").hasAnyRole("Admin", "User")
-                .antMatchers("/**/hello").hasAnyRole("Admin", "Operator")
-                .antMatchers("/**/coffee").hasAnyRole("Admin", "Operator")
+                .antMatchers("/books").hasAnyAuthority(Authority.READ, Authority.CREATE, Authority.EDIT, Authority.DELETE)
+                .antMatchers("/**/add", "/**/save").hasAnyAuthority(Authority.CREATE, Authority.EDIT, Authority.DELETE)
+                .antMatchers("/**/delete/**").hasAuthority(Authority.DELETE)
+                .antMatchers("/**/edit/**").hasAuthority(Authority.EDIT)
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
