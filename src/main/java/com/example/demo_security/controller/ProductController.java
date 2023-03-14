@@ -1,12 +1,10 @@
 package com.example.demo_security.controller;
 
 import com.example.demo_security.model.Product;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -14,6 +12,9 @@ import java.util.List;
 
 @RestController
 public class ProductController {
+    public ProductController(@Qualifier("csvFile") String csvFile) {
+    }
+
     @GetMapping("/api/products")
     public List<Product> getProduct() {
         List<Product> productList = new ArrayList<>();
@@ -34,9 +35,4 @@ public class ProductController {
         return "coffee";
     }
 
-    @GetMapping("/un-authorizes")
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<String> unAuthorizes() {
-        return ResponseEntity.ok("reason: un-authorizes; status-code: 403");
-    }
 }
